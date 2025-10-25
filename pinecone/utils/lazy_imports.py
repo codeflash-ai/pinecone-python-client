@@ -73,17 +73,16 @@ def setup_lazy_imports(lazy_imports: Optional[Dict[str, Tuple[str, str]]] = None
         lazy_imports: Optional dictionary of imports to handle lazily.
                      If None, uses the default LAZY_IMPORTS dictionary.
     """
-    if lazy_imports is None:
-        lazy_imports = LAZY_IMPORTS
+    # Fast path: avoid extra variable assignment if dictionary is already provided
+    imports = lazy_imports if lazy_imports is not None else LAZY_IMPORTS
 
-    # Only proceed if the pinecone module is already loaded
-    if "pinecone" not in sys.modules:
+    # Avoid repeated dict lookups (slightly faster, especially under CPython)
+    pinecone_mod = sys.modules.get("pinecone")
+    if pinecone_mod is None:
         return
 
-    # Create a proxy for the pinecone module
-    original_module = sys.modules["pinecone"]
-    proxy = LazyModule(original_module, lazy_imports)
+    # Defer the LazyModule import until actually needed
+    proxy = LazyModule(pinecone_mod, imports)
 
-    # Replace the pinecone module with our proxy
-    # Use a type cast to satisfy the type checker
+    # Replace in sys.modules directly
     sys.modules["pinecone"] = cast(ModuleType, proxy)
