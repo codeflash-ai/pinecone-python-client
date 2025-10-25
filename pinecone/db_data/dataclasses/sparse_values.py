@@ -15,6 +15,6 @@ class SparseValues(DictLike):
 
     @staticmethod
     def from_dict(sparse_values_dict: SparseVectorTypedDict) -> "SparseValues":
-        return SparseValues(
-            indices=sparse_values_dict["indices"], values=sparse_values_dict["values"]
-        )
+        indices = sparse_values_dict["indices"]
+        values = sparse_values_dict["values"]
+        return SparseValues(indices, values)
