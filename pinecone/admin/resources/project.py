@@ -140,16 +140,19 @@ class ProjectResource:
             return self._projects_api.fetch_project(project_id=project_id)
         else:
             projects = self.list().data
-            projects = [project for project in projects if project.name == name]
-            if len(projects) == 0:
+            matching_projects = []
+            for project in projects:
+                if project.name == name:
+                    matching_projects.append(project)
+            if len(matching_projects) == 0:
                 raise NotFoundException(f"Project with name '{name}' not found")
-            elif len(projects) > 1:
-                ids = [project.id for project in projects]
+            elif len(matching_projects) > 1:
+                ids = [project.id for project in matching_projects]
                 raise PineconeException(
                     f"Multiple projects found with name '{name}'. Please use project_id to fetch a specific project. Matching project ids: {ids}"
                 )
             else:
-                return projects[0]
+                return matching_projects[0]
 
     @require_kwargs
     def get(self, project_id: Optional[str] = None, name: Optional[str] = None):
