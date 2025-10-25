@@ -18,9 +18,9 @@ def present_list(mylist) -> str:
         # message with (2  more) or whatever when the
         # number of items is so small and it's no problem
         # to display the real values.
-        return f"[{', '.join(repr(x) for x in mylist)}]"
-    first_part = ", ".join(repr(x) for x in mylist[:2])
-    last_part = ", ".join(repr(x) for x in mylist[-2:])
+        return f"[{', '.join(map(repr, mylist))}]"
+    first_part = f"{repr(mylist[0])}, {repr(mylist[1])}"
+    last_part = f"{repr(mylist[-2])}, {repr(mylist[-1])}"
     formatted_values = f"[{first_part}, ..., {last_part}]"
     return formatted_values
 
