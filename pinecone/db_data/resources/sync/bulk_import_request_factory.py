@@ -52,7 +52,12 @@ class BulkImportRequestFactory:
     def list_imports_paginated_args(
         limit: Optional[int] = None, pagination_token: Optional[str] = None, **kwargs
     ) -> dict[str, Any]:
-        return parse_non_empty_args([("limit", limit), ("pagination_token", pagination_token)])
+        result: dict[str, Any] = {}
+        if limit is not None:
+            result["limit"] = limit
+        if pagination_token is not None:
+            result["pagination_token"] = pagination_token
+        return result
 
     @staticmethod
     def describe_import_args(id: str) -> DescribeImportArgs:
