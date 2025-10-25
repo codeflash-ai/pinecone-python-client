@@ -23,6 +23,7 @@ class LazyModule:
         self._original_module = original_module
         self._lazy_imports = lazy_imports
         self._loaded_attrs = {}
+        self._imported_modules = {}  # Cache imported modules
 
     @property
     def __doc__(self):
@@ -55,12 +56,20 @@ class LazyModule:
             pass
 
         # Then try lazy imports
-        if name in self._lazy_imports:
-            if name not in self._loaded_attrs:
-                module_path, item_name = self._lazy_imports[name]
-                module = importlib.import_module(module_path)
-                self._loaded_attrs[name] = getattr(module, item_name)
-            return self._loaded_attrs[name]
+        lazy_imports = self._lazy_imports
+        if name in lazy_imports:
+            loaded_attrs = self._loaded_attrs
+            if name not in loaded_attrs:
+                module_path, item_name = lazy_imports[name]
+                # Use a module cache to avoid redundant imports
+                imported_modules = self._imported_modules
+                try:
+                    module = imported_modules[module_path]
+                except KeyError:
+                    module = importlib.import_module(module_path)
+                    imported_modules[module_path] = module
+                loaded_attrs[name] = getattr(module, item_name)
+            return loaded_attrs[name]
 
         raise AttributeError(f"module '{self._original_module.__name__}' has no attribute '{name}'")
 
