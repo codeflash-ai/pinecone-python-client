@@ -45,7 +45,7 @@ class LazyModule:
         lazy_dir = list(self._lazy_imports.keys())
 
         # Return combined list
-        return sorted(set(base_dir + lazy_dir))
+        return sorted(dict.fromkeys(base_dir + lazy_dir))
 
     def __getattr__(self, name):
         # First try the original module
