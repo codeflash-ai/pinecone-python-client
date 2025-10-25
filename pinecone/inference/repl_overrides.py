@@ -11,21 +11,29 @@ from pinecone.core.openapi.inference.models import (
 def present_list(mylist) -> str:
     if not mylist:
         return "[]"
-    if len(mylist) <= 5:
+    n = len(mylist)
+    if n <= 5:
         # Show list as usual when fewer than 5 items.
         # This number is arbitrary and can be adjusted
         # but it seems silly to show the abbreviated
         # message with (2  more) or whatever when the
         # number of items is so small and it's no problem
         # to display the real values.
-        return f"[{', '.join(repr(x) for x in mylist)}]"
-    first_part = ", ".join(repr(x) for x in mylist[:2])
-    last_part = ", ".join(repr(x) for x in mylist[-2:])
+        # Use list comprehension and join once for improved efficiency.
+        return "[" + ", ".join(map(repr, mylist)) + "]"
+    # Avoid unnecessary slicing and generator overhead, minimize calls to repr
+    # Create the output using map and list expansion for the first and last parts
+    first_two = mylist[:2]
+    last_two = mylist[-2:]
+    # Map repr once for each segment
+    first_part = ", ".join(map(repr, first_two))
+    last_part = ", ".join(map(repr, last_two))
     formatted_values = f"[{first_part}, ..., {last_part}]"
     return formatted_values
 
 
 def sparse_embedding_to_str(self: OpenAPISparseEmbedding):
+    # Call present_list once for each attribute
     formatted_sparse_values = present_list(self.sparse_values)
     formatted_sparse_indices = present_list(self.sparse_indices)
     formatted_sparse_tokens = present_list(self.sparse_tokens)
@@ -36,7 +44,8 @@ def sparse_embedding_to_str(self: OpenAPISparseEmbedding):
     ]
     if self.sparse_tokens:
         parts.append(f"'sparse_tokens': {formatted_sparse_tokens}")
-    return "{{{}}}".format(", ".join(parts))
+    # Use f-string for join and dict braces formatting which is faster and clearer
+    return f"{{{', '.join(parts)}}}"
 
 
 def dense_embedding_to_str(self: OpenAPIDenseEmbedding):
