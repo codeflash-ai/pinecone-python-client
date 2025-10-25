@@ -24,7 +24,7 @@ class IndexHostStore(metaclass=SingletonMeta):
         self._indexHosts = {}
 
     def _key(self, config: Config, index_name: str) -> str:
-        return ":".join([config.api_key, index_name])
+        return config.api_key + ":" + index_name
 
     def delete_host(self, config: Config, index_name: str):
         key = self._key(config, index_name)
