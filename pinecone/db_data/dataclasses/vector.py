@@ -27,15 +27,12 @@ class Vector(DictLike):
 
     @staticmethod
     def from_dict(vector_dict: VectorTypedDict) -> "Vector":
-        passed_sparse_values = vector_dict.get("sparse_values")
-        if passed_sparse_values is not None:
-            parsed_sparse_values = SparseValues.from_dict(passed_sparse_values)
-        else:
-            parsed_sparse_values = None
-
+        # Inline conditional assignment removes an unnecessary local variable.
         return Vector(
             id=vector_dict["id"],
             values=vector_dict["values"],
             metadata=vector_dict.get("metadata"),
-            sparse_values=parsed_sparse_values,
+            sparse_values=SparseValues.from_dict(vector_dict["sparse_values"])
+            if vector_dict.get("sparse_values") is not None
+            else None,
         )
