@@ -42,8 +42,7 @@ class CollectionResource(PluginAware):
 
     @require_kwargs
     def list(self) -> CollectionList:
-        response = self.index_api.list_collections()
-        return CollectionList(response)
+        return CollectionList(self.index_api.list_collections())
 
     @require_kwargs
     def delete(self, *, name: str) -> None:
