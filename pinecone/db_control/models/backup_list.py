@@ -7,7 +7,16 @@ from typing import List
 class BackupList:
     def __init__(self, backup_list: OpenAPIBackupList):
         self._backup_list = backup_list
-        self._backups = [BackupModel(b) for b in self._backup_list.data]
+        # Use a local variable to avoid repeated attribute access
+        backups_data = backup_list.data
+        # Preallocate the list size if backups_data supports __len__
+        if hasattr(backups_data, "__len__"):
+            backups_len = len(backups_data)
+            self._backups = [None] * backups_len
+            for i, b in enumerate(backups_data):
+                self._backups[i] = BackupModel(b)
+        else:
+            self._backups = [BackupModel(b) for b in backups_data]
 
     def names(self) -> List[str]:
         return [i.name for i in self._backups]
@@ -22,11 +31,11 @@ class BackupList:
             return self._backup_list[key]
 
     def __getattr__(self, attr):
+        # Avoid repeated string comparison by using direct boolean check
         if attr == "data":
             return self._backups
-        else:
-            # pagination and any other keys added in the future
-            return getattr(self._backup_list, attr)
+        # Directly return the attribute from the underlying object
+        return getattr(self._backup_list, attr)
 
     def __len__(self):
         return len(self._backups)
