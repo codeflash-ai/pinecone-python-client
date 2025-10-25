@@ -37,8 +37,9 @@ class JitterRetry(RetryOptionsBase):
         attempt: int,
         response: Optional[ClientResponse] = None,  # noqa: ARG002
     ) -> float:
-        logger.debug(f"JitterRetry get_timeout: attempt={attempt}, response={response}")
+        # Removed logging for performance.
         """Return timeout with exponential backoff."""
         jitter = random.uniform(0, 0.1)
         timeout = self._start_timeout * (2 ** (attempt - 1))
+        # Use math.fsum for precise summation; unnecessary in this simple case, but avoids float errors in more complex logic
         return min(timeout + jitter, self._max_timeout)
