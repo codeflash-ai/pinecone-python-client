@@ -66,7 +66,8 @@ logger = logging.getLogger(__name__)
 
 def parse_query_response(response: QueryResponse):
     """:meta private:"""
-    response._data_store.pop("results", None)
+    if "results" in response._data_store:
+        del response._data_store["results"]
     return response
 
 
@@ -643,7 +644,7 @@ class Index(PluginAware, IndexInterface):
     @validate_and_convert_errors
     @require_kwargs
     def list_namespaces(
-            self, limit: Optional[int] = None, **kwargs
+        self, limit: Optional[int] = None, **kwargs
     ) -> Iterator[ListNamespacesResponse]:
         return self.namespace.list(limit=limit, **kwargs)
 
@@ -652,4 +653,6 @@ class Index(PluginAware, IndexInterface):
     def list_namespaces_paginated(
         self, limit: Optional[int] = None, pagination_token: Optional[str] = None, **kwargs
     ) -> ListNamespacesResponse:
-        return self.namespace.list_paginated(limit=limit, pagination_token=pagination_token, **kwargs)
+        return self.namespace.list_paginated(
+            limit=limit, pagination_token=pagination_token, **kwargs
+        )
