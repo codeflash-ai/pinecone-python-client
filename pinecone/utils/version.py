@@ -2,7 +2,9 @@ from pathlib import Path
 
 
 def get_version():
-    return Path(__file__).parent.parent.joinpath("__version__").read_text().strip()
+    version_path = Path(__file__).parent.parent.joinpath("__version__")
+    with open(version_path, "r") as f:
+        return f.read().strip()
 
 
 __version__ = get_version()
