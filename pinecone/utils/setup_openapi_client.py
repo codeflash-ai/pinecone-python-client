@@ -12,8 +12,11 @@ def setup_async_openapi_client(
     api_client = api_client_klass(configuration=openapi_config)
     api_client.user_agent = get_user_agent(config)
     extra_headers = config.additional_headers or {}
-    for key, value in extra_headers.items():
-        api_client.set_default_header(key, value)
+    if isinstance(extra_headers, dict):
+        api_client.default_headers.update(extra_headers)
+    else:
+        for key, value in extra_headers.items():
+            api_client.set_default_header(key, value)
 
     if api_version:
         api_client.set_default_header("X-Pinecone-API-Version", api_version)
