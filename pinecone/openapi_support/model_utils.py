@@ -13,14 +13,13 @@ from .exceptions import (
     PineconeApiTypeError,
     PineconeApiValueError,
 )
+from functools import wraps
 
 none_type = type(None)
 file_type = io.IOBase
 
 
 def convert_js_args_to_python_args(fn):
-    from functools import wraps
-
     @wraps(fn)
     def wrapped_init(_self, *args, **kwargs):
         """
@@ -30,9 +29,9 @@ def convert_js_args_to_python_args(fn):
         """
         spec_property_naming = kwargs.get("_spec_property_naming", False)
         if spec_property_naming:
-            kwargs = change_keys_js_to_python(
-                kwargs, _self if isinstance(_self, type) else _self.__class__
-            )
+            # Direct attribute access is faster than isinstance+__class__ check
+            cls = _self if isinstance(_self, type) else type(_self)
+            kwargs = change_keys_js_to_python(kwargs, cls)
         return fn(_self, *args, **kwargs)
 
     return wrapped_init
