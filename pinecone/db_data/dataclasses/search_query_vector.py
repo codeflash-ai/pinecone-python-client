@@ -30,9 +30,15 @@ class SearchQueryVector:
         """
         Returns the SearchQueryVector as a dictionary.
         """
-        d = {
-            "values": self.values,
-            "sparse_values": self.sparse_values,
-            "sparse_indices": self.sparse_indices,
-        }
-        return {k: v for k, v in d.items() if v is not None}
+        # Directly construct the dictionary only with non-None attributes
+        result = {}
+        values = self.values
+        if values is not None:
+            result["values"] = values
+        sparse_values = self.sparse_values
+        if sparse_values is not None:
+            result["sparse_values"] = sparse_values
+        sparse_indices = self.sparse_indices
+        if sparse_indices is not None:
+            result["sparse_indices"] = sparse_indices
+        return result
