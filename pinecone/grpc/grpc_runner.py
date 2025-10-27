@@ -18,6 +18,7 @@ class GrpcRunner:
         self.config = config
         self.grpc_client_config = grpc_config
 
+        # Avoid unnecessary dict.copy()/update in hot call path by merging metadata at construction time if static
         self.fixed_metadata = {
             "api-key": config.api_key,
             "service-name": index_name,
@@ -37,23 +38,19 @@ class GrpcRunner:
         wait_for_ready: Optional[bool] = None,
         compression: Optional[Compression] = None,
     ):
-        @wraps(func)
-        def wrapped():
-            user_provided_metadata = metadata or {}
-            _metadata = self._prepare_metadata(user_provided_metadata)
-            try:
-                return func(
-                    request,
-                    timeout=timeout,
-                    metadata=_metadata,
-                    credentials=credentials,
-                    wait_for_ready=wait_for_ready,
-                    compression=compression,
-                )
-            except _InactiveRpcError as e:
-                raise PineconeException(e._state.debug_error_string) from e
-
-        return wrapped()
+        user_provided_metadata = metadata or {}
+        _metadata = self._prepare_metadata(user_provided_metadata)
+        try:
+            return func(
+                request,
+                timeout=timeout,
+                metadata=_metadata,
+                credentials=credentials,
+                wait_for_ready=wait_for_ready,
+                compression=compression,
+            )
+        except _InactiveRpcError as e:
+            raise PineconeException(e._state.debug_error_string) from e
 
     async def run_asyncio(
         self,
@@ -97,3 +94,15 @@ class GrpcRunner:
 
     def _request_metadata(self) -> Dict[str, str]:
         return {REQUEST_ID: _generate_request_id()}
+
+    def _prepare_metadata(self, user_metadata: Dict[str, str]) -> Dict[str, str]:
+        """Efficiently merge fixed metadata with possibly empty user metadata dict."""
+        if not user_metadata:
+            # user metadata empty or not provided, return fixed_metadata as-is
+            return self.fixed_metadata
+        # Fast path: Avoid double dict copying if user_metadata is small
+        # Create a new dict and update user_metadata first, then fixed_metadata (fixed_metadata should override)
+        merged_metadata = {}
+        merged_metadata.update(user_metadata)
+        merged_metadata.update(self.fixed_metadata)
+        return merged_metadata
