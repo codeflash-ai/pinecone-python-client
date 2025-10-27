@@ -52,11 +52,18 @@ class RetryOnRpcErrorClientInterceptor(
 
     def _is_retryable_error(self, response_or_error):
         """Determine if a response is a retryable error."""
-        return (
-            isinstance(response_or_error, grpc.RpcError)
-            and "_MultiThreadedRendezvous" not in response_or_error.__class__.__name__
-            and response_or_error.code() in self.retryable_status
-        )
+        # Avoid accessing __class__.__name__ unless the instance is RpcError for efficiency.
+        # Also, do a quick check on the retryable_status set early.
+        if not isinstance(response_or_error, grpc.RpcError):
+            return False
+        # Faster negative path: direct comparison if possible (avoid using __class__ if not necessary)
+        # Also _MultiThreadedRendezvous is almost always RpcError, so fast-path out if so
+        cls_name = type(response_or_error).__name__
+        if "_MultiThreadedRendezvous" in cls_name:
+            return False
+        code = response_or_error.code()
+        # retryable_status is expected to be a set for O(1) lookup
+        return code in self.retryable_status
 
     def _intercept_call(self, continuation, client_call_details, request_or_iterator):
         response = None
