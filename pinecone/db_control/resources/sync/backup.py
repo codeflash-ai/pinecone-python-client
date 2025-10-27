@@ -94,7 +94,7 @@ class BackupResource(PluginAware):
     @require_kwargs
     def get(self, *, backup_id: str) -> BackupModel:
         """Alias for describe"""
-        return self.describe(backup_id=backup_id)
+        return BackupModel(self._index_api.describe_backup(backup_id=backup_id))
 
     @require_kwargs
     def delete(self, *, backup_id: str) -> None:
