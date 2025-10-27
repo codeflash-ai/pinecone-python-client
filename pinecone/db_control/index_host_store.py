@@ -24,7 +24,7 @@ class IndexHostStore(metaclass=SingletonMeta):
         self._indexHosts = {}
 
     def _key(self, config: Config, index_name: str) -> str:
-        return ":".join([config.api_key, index_name])
+        return config.api_key + ":" + index_name
 
     def delete_host(self, config: Config, index_name: str):
         key = self._key(config, index_name)
@@ -40,14 +40,20 @@ class IndexHostStore(metaclass=SingletonMeta):
             self._indexHosts[key] = normalize_host(host)
 
     def get_host(self, api: IndexOperationsApi, config: Config, index_name: str) -> str:
-        key = self._key(config, index_name)
-        if self.key_exists(key):
-            return self._indexHosts[key]
-        else:
+        # Cache key and _indexHosts locally to avoid attribute and method lookups
+        key = f"{config.api_key}:{index_name}"
+        store = self._indexHosts
+        try:
+            return store[key]
+        except KeyError:
+            # Directly update in the store to avoid extra attribute lookup
             description = api.describe_index(index_name)
-            self.set_host(config, index_name, description.host)
-            if not self.key_exists(key):
+            host = description.host
+            if host:
+                normalized = normalize_host(host)
+                store[key] = normalized
+            if key not in store:
                 raise PineconeException(
                     f"Could not get host for index: {index_name}. Call describe_index('{index_name}') to check the current status."
                 )
-            return self._indexHosts[key]
+            return store[key]
