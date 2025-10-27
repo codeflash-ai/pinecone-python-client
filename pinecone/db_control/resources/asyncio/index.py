@@ -162,8 +162,12 @@ class IndexResourceAsyncio:
         response = await self._index_api.list_indexes()
         return IndexList(response)
 
-    @require_kwargs
     async def describe(self, *, name: str) -> IndexModel:
+        # The logic from require_kwargs:
+        # Only allow keyword arguments, not positional except self
+        # (This method signature enforces keyword-only for 'name', so only check accidental positional use.)
+        # If someone bypasses the keyword-only enforcement by using varargs, raise TypeError.
+        # Technically, the Python signature prevents positional use for 'name', so for efficiency we skip extra checking.
         description = await self._index_api.describe_index(name)
         return IndexModel(description)
 
