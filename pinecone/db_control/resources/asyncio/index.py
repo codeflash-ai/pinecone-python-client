@@ -170,10 +170,10 @@ class IndexResourceAsyncio:
     @require_kwargs
     async def has(self, *, name: str) -> bool:
         available_indexes = await self.list()
-        if name in available_indexes.names():
-            return True
-        else:
-            return False
+        for index in available_indexes.indexes:
+            if index.name == name:
+                return True
+        return False
 
     @require_kwargs
     async def configure(
