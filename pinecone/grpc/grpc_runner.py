@@ -86,14 +86,13 @@ class GrpcRunner:
     def _prepare_metadata(
         self, user_provided_metadata: Dict[str, str]
     ) -> Tuple[Tuple[str, str], ...]:
-        return tuple(
-            (k, v)
-            for k, v in {
-                **self.fixed_metadata,
-                **self._request_metadata(),
-                **user_provided_metadata,
-            }.items()
-        )
+        # Only one per-request entry: REQUEST_ID
+        # Merging dicts using copy+update is generally faster than unpacking into a new dict
+        merged = self.fixed_metadata.copy()
+        merged[REQUEST_ID] = _generate_request_id()
+        if user_provided_metadata:
+            merged.update(user_provided_metadata)
+        return tuple(merged.items())
 
     def _request_metadata(self) -> Dict[str, str]:
         return {REQUEST_ID: _generate_request_id()}
