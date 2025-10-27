@@ -76,6 +76,15 @@ class EndpointUtils:
         collection_format_map: Dict[str, str],
         kwargs: Dict[str, Any],
     ) -> CombinedParamsMapDict:
+        # Preload frequently-accessed objects locally for faster attribute and lookup access
+        _body = "body"
+        _form = "form"
+        _query = "query"
+        _header = "header"
+        _path = "path"
+        file_type_tuple = (file_type,)
+        file_type_list_tuple = ([file_type],)
+
         params: CombinedParamsMapDict = {
             "body": None,
             "collection_format": {},
@@ -86,36 +95,51 @@ class EndpointUtils:
             "query": [],
         }
 
+        # Reduce the number of .get lookups by pre-binding functions
+        location_map_get = location_map.get
+        attribute_map_get = (
+            attribute_map.__getitem__
+        )  # attribute_map[param_name] to avoid slow .get
+        openapi_types_get = openapi_types.__getitem__
+        collection_format_map_get = collection_format_map.get
+        params_cf = params["collection_format"]
+        params_file = params["file"]
+        params_form = params["form"]
+        params_query = params["query"]
+        params_header = params["header"]
+        params_path = params["path"]
+
         for param_name, param_value in kwargs.items():
-            param_location = location_map.get(param_name)
+            param_location = location_map_get(param_name)
             if param_location is None:
                 continue
-            if param_location:
-                if param_location == "body":
-                    params["body"] = param_value
-                    continue
-                base_name = attribute_map[param_name]
-                if param_location == "form" and openapi_types[param_name] == (file_type,):
-                    params["file"][param_name] = [param_value]
-                elif param_location == "form" and openapi_types[param_name] == ([file_type],):
-                    # param_value is already a list
-                    params["file"][param_name] = param_value
-                elif param_location == "form":
-                    param_value_full = (base_name, param_value)
-                    params["form"].append(param_value_full)
-                elif param_location == "query":
-                    param_value_full = (base_name, param_value)
-                    params["query"].append(param_value_full)
-                elif param_location == "header":
-                    params["header"][base_name] = param_value
-                elif param_location == "path":
-                    params["path"][base_name] = param_value
-                else:
-                    raise PineconeApiTypeError("Got an unexpected location '%s' for parameter `%s`")
+            # fast-path body handling
+            if param_location == _body:
+                params["body"] = param_value
+                continue
 
-                collection_format = collection_format_map.get(param_name)
-                if collection_format:
-                    params["collection_format"][base_name] = collection_format
+            base_name = attribute_map_get(param_name)
+            if param_location == _form:
+                openapi_type = openapi_types_get(param_name)
+                if openapi_type is file_type_tuple:
+                    params_file[param_name] = [param_value]
+                elif openapi_type is file_type_list_tuple:
+                    params_file[param_name] = param_value
+                else:
+                    params_form.append((base_name, param_value))
+            elif param_location == _query:
+                params_query.append((base_name, param_value))
+            elif param_location == _header:
+                params_header[base_name] = param_value
+            elif param_location == _path:
+                params_path[base_name] = param_value
+            else:
+                # maintain behavior for unknown location
+                raise PineconeApiTypeError("Got an unexpected location '%s' for parameter `%s`")
+
+            collection_format = collection_format_map_get(param_name)
+            if collection_format:
+                params_cf[base_name] = collection_format
 
         return params
 
