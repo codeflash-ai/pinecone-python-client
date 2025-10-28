@@ -188,10 +188,10 @@ class RestClientInterface(ABC):
         return self.request(
             "PATCH",
             url,
-            headers=headers,
-            query_params=query_params,
-            post_params=post_params,
-            _preload_content=_preload_content,
-            _request_timeout=_request_timeout,
-            body=body,
+            query_params,
+            headers,
+            body,
+            post_params,
+            _preload_content,
+            _request_timeout,
         )
