@@ -31,9 +31,9 @@ class RESTResponse(io.IOBase):
 
 
 def raise_exceptions_or_return(r: RESTResponse):
-    logger.debug("response status: %s", r.status)
-
     if not 200 <= r.status <= 299:
+        logger.debug("response status: %s", r.status)
+
         if r.status == 401:
             raise UnauthorizedException(http_resp=r)
 
