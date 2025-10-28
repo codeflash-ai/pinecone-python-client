@@ -103,15 +103,17 @@ class RestClientInterface(ABC):
         _preload_content=True,
         _request_timeout=None,
     ):
+        # Fast-path: prepare all arguments as a tuple and pass directly,
+        # avoiding unpacking dict for keyword arguments
         return self.request(
             "OPTIONS",
             url,
-            headers=headers,
-            query_params=query_params,
-            post_params=post_params,
-            _preload_content=_preload_content,
-            _request_timeout=_request_timeout,
-            body=body,
+            query_params,
+            headers,
+            body,
+            post_params,
+            _preload_content,
+            _request_timeout,
         )
 
     def DELETE(
