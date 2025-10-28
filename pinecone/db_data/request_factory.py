@@ -153,13 +153,14 @@ class IndexRequestFactory:
         namespace: Optional[str] = None,
         **kwargs,
     ) -> Dict[str, Any]:
+        # Build generator directly to avoid allocating an unnecessary list
         return parse_non_empty_args(
-            [
+            (
                 ("prefix", prefix),
                 ("limit", limit),
                 ("namespace", namespace),
                 ("pagination_token", pagination_token),
-            ]
+            )
         )
 
     @staticmethod
