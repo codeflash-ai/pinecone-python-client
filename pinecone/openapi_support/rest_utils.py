@@ -27,7 +27,10 @@ class RESTResponse(io.IOBase):
 
     def getheader(self, name, default=None):
         """Returns a given response header."""
-        return self.headers.get(name, default)
+        try:
+            return self.headers[name]
+        except KeyError:
+            return default
 
 
 def raise_exceptions_or_return(r: RESTResponse):
